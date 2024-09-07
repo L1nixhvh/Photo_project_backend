@@ -3,12 +3,10 @@ from app.models.users import Users
 from argon2 import PasswordHasher
 from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
-from app import app
 
 
 class UsersService:
     def __init__(self):
-        app.app_context().push()
         self.hasher = PasswordHasher()
 
     def set_password(self, password):
@@ -18,20 +16,23 @@ class UsersService:
         return self.hasher.verify(password_hash, password)
 
     @staticmethod
-    def FindUser(Attribute):
+    def FindUser(username=None, email=None, id=None):
+        if not isinstance(id, int) and id is not None:
+            id = int(id)
         try:
             return (
                 db.session.query(Users)
                 .filter(
                     or_(
-                        Users.username == Attribute,
-                        Users.email == Attribute,
-                        Users.id == Attribute,
+                        Users.username == username if username is not None else False,
+                        Users.email == email if email is not None else False,
+                        Users.id == id if id is not None else False,
                     )
                 )
                 .first()
             )
         except:
+            db.session.rollback()
             return False
 
     @staticmethod

@@ -51,7 +51,7 @@ def register():
     if type(username) != str or type(email) != str or type(password) != str:
         return jsonify({"msg": "Incorrect data type detected", "status": 400})
 
-    user = auth_Blueprint.users.FindUser(username)
+    user = auth_Blueprint.users.FindUser(username, email)
 
     if user:
         if user.username == username:
