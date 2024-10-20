@@ -1,7 +1,7 @@
-from app import app
-from app.routes.auth import auth_Blueprint
+from app import create_app
+from config import Config
 
-app.register_blueprint(auth_Blueprint, url_prefix="/api/auth")
 
 if __name__ == "__main__":
+    app = create_app(Config)
     app.run(debug=True, host="0.0.0.0", port=5000)

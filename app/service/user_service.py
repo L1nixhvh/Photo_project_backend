@@ -2,7 +2,6 @@ from app import db
 from app.models.users import Users
 from argon2 import PasswordHasher
 from sqlalchemy import or_
-from sqlalchemy.exc import SQLAlchemyError
 
 
 class UsersService:
@@ -15,9 +14,8 @@ class UsersService:
     def check_password(self, password_hash, password):
         return self.hasher.verify(password_hash, password)
 
-    @staticmethod
-    def FindUser(username=None, email=None, id=None):
-        if not isinstance(id, int) and id is not None:
+    def find_user(self, username=None, email=None, id=None):
+        if isinstance(id, int) and id is not None:
             id = int(id)
         try:
             return (
@@ -35,13 +33,30 @@ class UsersService:
             db.session.rollback()
             return False
 
-    @staticmethod
-    def InsertUser(username, email, password) -> bool:
+    def insert_user(self, username, email, password) -> bool:
         try:
             new_user = Users(username=username, email=email, password_hash=password)
             db.session.add(new_user)
             db.session.commit()
             return new_user.id
-        except SQLAlchemyError as e:
+        except:
+            db.session.rollback()
+            return False
+
+    def delete_user(self, user) -> bool:
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            return True
+        except:
+            db.session.rollback()
+            return False
+
+    def update_email(self, user, email) -> bool:
+        try:
+            user.email = email
+            db.session.commit()
+            return True
+        except:
             db.session.rollback()
             return False
