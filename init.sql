@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS users
 (
-    id serial PRIMARY KEY,
+    id varchar(64) PRIMARY KEY,
     username varchar(64) NOT NULL,
     email varchar(120) NOT NULL,
     password_hash varchar(256)
@@ -9,14 +9,14 @@ CREATE TABLE IF NOT EXISTS users
 CREATE UNIQUE INDEX IF NOT EXISTS ix_users_email ON users (email);
 CREATE UNIQUE INDEX IF NOT EXISTS ix_users_username ON users (username);
 
-CREATE TABLE IF NOT EXISTS activitylogs
-(
-    log_id serial PRIMARY KEY,          
-    user_id int REFERENCES users(id),  
-    activity varchar(255) NOT NULL,   
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    details text
-);
+CREATE TABLE IF NOT EXISTS photos (
+    id varchar(64) PRIMARY KEY, 
+    user_id varchar(64) NOT NULL,
+    photo_data BYTEA NOT NULL,
+    description TEXT,
 
-CREATE INDEX IF NOT EXISTS ix_activity_logs_user_id ON activitylogs (user_id);
-CREATE INDEX IF NOT EXISTS ix_activity_logs_timestamp ON activitylogs (timestamp);
+    FOREIGN KEY (user_id) REFERENCES users(id) 
+        ON DELETE CASCADE 
+        ON UPDATE CASCADE
+);
+CREATE INDEX idx_user_id ON photos (user_id);

@@ -2,6 +2,7 @@ from app import db
 from app.models.users import Users
 from argon2 import PasswordHasher
 from sqlalchemy import or_
+import uuid
 
 
 class UsersService:
@@ -15,8 +16,6 @@ class UsersService:
         return self.hasher.verify(password_hash, password)
 
     def find_user(self, username=None, email=None, id=None):
-        if isinstance(id, int) and id is not None:
-            id = int(id)
         try:
             return (
                 db.session.query(Users)
@@ -35,11 +34,17 @@ class UsersService:
 
     def insert_user(self, username, email, password) -> bool:
         try:
-            new_user = Users(username=username, email=email, password_hash=password)
+            new_user = Users(
+                id=str(uuid.uuid4()),
+                username=username,
+                email=email,
+                password_hash=password,
+            )
             db.session.add(new_user)
             db.session.commit()
             return new_user.id
-        except:
+        except Exception as Error:
+            print(Error),
             db.session.rollback()
             return False
 

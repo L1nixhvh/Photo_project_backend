@@ -1,7 +1,5 @@
 import pytest
 from app import create_app, db
-from config import TestingConfig
-from app.models.users import Users
 
 
 @pytest.fixture(scope="module")
@@ -16,13 +14,22 @@ def new_user():
 
 @pytest.fixture(scope="module")
 def test_client():
-    flask_app = create_app(TestingConfig)
+    flask_app = create_app("test")
 
     with flask_app.test_client() as testing_client:
         with flask_app.app_context():
             db.create_all()
             yield testing_client
             db.drop_all()
+
+
+@pytest.fixture(scope="module")
+def auth_headers(test_client, new_user):
+    """Создание фикстуры для получения токена авторизации."""
+    login_data = {"username": new_user["username"], "password": new_user["password"]}
+    response = test_client.post("/api/user/login", json=login_data)
+    access_token = response.json["access_token"]
+    return {"Authorization": f"Bearer {access_token}"}
 
 
 """Тестирование эндпоинта регистрации."""
@@ -88,7 +95,7 @@ def test_login(test_client, new_user):
     login_data = {"username": new_user["username"], "password": new_user["password"]}
     response = test_client.post("/api/user/login", json=login_data)
     assert response.status_code == 200
-    assert response.json["msg"] == "Authorization successful"
+    assert response.json["msg"] == "Login success"
 
 
 def test_login_incorrect_password(test_client, new_user):
@@ -125,56 +132,55 @@ def test_login_incorrect_username_type(test_client):
 """Тестирование изменения email пользователя."""
 
 
-def test_edit_email(test_client, new_user):
+def test_edit_email(test_client, auth_headers):
     """Тестирование изменения email пользователя."""
-    user = Users.query.filter_by(username=new_user["username"]).first()
-
     new_email = {"email": "new_email@example.com"}
-    response = test_client.put(f"/api/user/edit/{user.id}", json=new_email)
+    response = test_client.put(f"/api/user/edit", json=new_email, headers=auth_headers)
     assert response.status_code == 200
     assert response.json["msg"] == "Update successful"
 
 
-def test_edit_email_existing_email(test_client, new_user):
+def test_edit_email_existing_email(test_client, auth_headers):
     """Тестирование изменения email на уже существующий email."""
     existing_user_data = {
         "username": "existinguser",
         "email": "existing@example.com",
         "password": "password",
     }
-    test_client.post("/api/user/register", json=existing_user_data)
+    newresponse = test_client.post("/api/user/register", json=existing_user_data)
+    assert newresponse.status_code == 200
 
-    user = Users.query.filter_by(username=new_user["username"]).first()
-
-    new_email = {"email": "existing@example.com"}
-    response = test_client.put(f"/api/user/edit/{user.id}", json=new_email)
+    existing_email = {"email": "existing@example.com"}
+    response = test_client.put(
+        "/api/user/edit",
+        json=existing_email,
+        headers=auth_headers,
+    )
     assert response.status_code == 400
     assert "Update not successful" in response.json["msg"]
 
 
-def test_edit_email_nonexistent_user(test_client):
-    """Тестирование изменения email для несуществующего пользователя."""
+def test_edit_email_non_token(test_client):
+    """Тестирование изменения email без токена авторизации."""
     response = test_client.put(
-        "/api/user/edit/99999", json={"email": "new_email@example.com"}
+        "/api/user/edit", json={"email": "new_email@example.com"}
     )
-    assert response.status_code == 400
-    assert "User not found" in response.json["msg"]
+    assert response.status_code == 401
+    assert "Missing Authorization Header" in response.json["msg"]
 
 
 """Тестирование удаления пользователя."""
 
 
-def test_delete_user(test_client, new_user):
+def test_delete_user(test_client, auth_headers):
     """Тестирование удаления пользователя."""
-    user = Users.query.filter_by(username=new_user["username"]).first()
-
-    response = test_client.delete(f"/api/user/delete/{user.id}")
+    response = test_client.delete(f"/api/user/delete", headers=auth_headers)
     assert response.status_code == 200
     assert response.json["msg"] == "Delete successful"
 
 
-def test_delete_nonexistent_user(test_client):
-    """Тестирование удаления несуществующего пользователя."""
-    response = test_client.delete("/api/user/delete/99999")
-    assert response.status_code == 400
-    assert "User not found" in response.json["msg"]
+def test_delete_none_token(test_client):
+    """Тестирование удаления без токена."""
+    response = test_client.delete("/api/user/delete")
+    assert response.status_code == 401
+    assert "Missing Authorization Header" in response.json["msg"]
