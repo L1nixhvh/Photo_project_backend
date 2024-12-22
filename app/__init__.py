@@ -59,6 +59,10 @@ def create_app(config_class="develop"):
 
     flask_app.register_blueprint(auth_Blueprint, url_prefix="/api/user")
 
+    from app.routes.photos import photos_Blueprint
+
+    flask_app.register_blueprint(photos_Blueprint, url_prefix="/api/photos")
+
     # Initialization database tables
     from app.models.users import Users
     from app.models.photos import Photos

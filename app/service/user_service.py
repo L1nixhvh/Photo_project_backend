@@ -43,8 +43,7 @@ class UsersService:
             db.session.add(new_user)
             db.session.commit()
             return new_user.id
-        except Exception as Error:
-            print(Error),
+        except:
             db.session.rollback()
             return False
 

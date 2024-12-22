@@ -16,7 +16,7 @@ def init_auth_blueprint(state):
 @auth_Blueprint.route("/login", methods=["POST"])
 def login():
     """
-    Логин пользователя
+    Login user
     ---
     tags:
       - User

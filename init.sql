@@ -12,7 +12,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_users_username ON users (username);
 CREATE TABLE IF NOT EXISTS photos (
     id varchar(64) PRIMARY KEY, 
     user_id varchar(64) NOT NULL,
-    photo_data BYTEA NOT NULL,
+    photo_url varchar(120 NOT NULL,
     description TEXT,
 
     FOREIGN KEY (user_id) REFERENCES users(id) 

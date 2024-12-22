@@ -13,8 +13,8 @@ class Photos(db.Model):
     user_id: so.Mapped[str] = so.mapped_column(
         sa.String(64), sa.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE")
     )
-    photo_data: so.Mapped[bytes] = so.mapped_column(sa.LargeBinary, nullable=False)
-    description: so.Mapped[str | None] = so.mapped_column(sa.Text, nullable=True)
+    photo_url: so.Mapped[str] = so.mapped_column(sa.String(255), nullable=False)
+    description: so.Mapped[str] = so.mapped_column(sa.Text, nullable=True)
 
     user = so.relationship("Users", backref="photos", lazy="joined")
 
